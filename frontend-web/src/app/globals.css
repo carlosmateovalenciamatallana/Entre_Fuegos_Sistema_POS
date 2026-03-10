@@ -12,3 +12,60 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+
+/* --- ESTILOS EXCLUSIVOS PARA LA IMPRESORA TÉRMICA SAT --- */
+@media print {
+  /* 1. Forzamos el fondo de toda la hoja a blanco absoluto */
+  body, html {
+    background-color: white !important;
+  }
+
+  /* 2. Ocultamos toda la interfaz oscura del dashboard */
+  body * {
+    visibility: hidden;
+  }
+  
+  /* 3. Volvemos visible ÚNICAMENTE el ticket y su contenido */
+  #ticket-impresion, #ticket-impresion * {
+    visibility: visible;
+  }
+  
+  /* 4. Posición y Ancho del ticket (76mm da margen de seguridad en rollo de 80mm) */
+  #ticket-impresion {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 76mm; 
+    margin: 0;
+    padding: 2mm; /* Pequeño respiro a los bordes */
+    background: white !important;
+    color: black !important;
+    font-family: monospace; 
+    font-size: 12px;
+  }
+
+  /* 5. ARREGLO DE LA TABLA: Evita que el precio se salga del papel */
+  #ticket-impresion table {
+    width: 100%;
+    table-layout: fixed; /* Obliga a la tabla a no expandirse más allá del ticket */
+  }
+  
+  /* Permite que textos muy largos pasen a la línea de abajo */
+  #ticket-impresion th, 
+  #ticket-impresion td {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    white-space: normal;
+  }
+
+  /* Distribución perfecta de columnas: Cantidad (15%) | Producto (55%) | Total (30%) */
+  #ticket-impresion th:nth-child(1), #ticket-impresion td:nth-child(1) { width: 15%; text-align: left; }
+  #ticket-impresion th:nth-child(2), #ticket-impresion td:nth-child(2) { width: 55%; text-align: left; padding-right: 4px; }
+  #ticket-impresion th:nth-child(3), #ticket-impresion td:nth-child(3) { width: 30%; text-align: right; }
+
+  /* 6. Quitamos los márgenes blancos que pone Chrome/Edge por defecto */
+  @page {
+    margin: 0;
+  }
+}

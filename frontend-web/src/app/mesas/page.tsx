@@ -1,99 +1,159 @@
+// src/app/mesas/page.tsx
 "use client";
+
 import { useEffect, useState } from "react";
-import { useUserStore } from "../../store/userStore";
-import { LogOut, Utensils, Bell, Loader2, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
+import { useUserStore } from "@/store/userStore";
+import { io } from "socket.io-client";
+import { toast } from "sonner";
+import { LogOut, User as UserIcon, Lock } from "lucide-react";
 
-export default function MesasScreen() {
-  const [mesas, setMesas] = useState<any[]>([]);
-  const [cargando, setCargando] = useState(true);
-  const { user, logout } = useUserStore();
+// Tipado basado en tu esquema Prisma
+interface Table {
+  id: number;
+  number: number;
+  capacity: number;
+  status: string;
+}
+
+export default function MesasPage() {
   const router = useRouter();
+  const user = useUserStore((state) => state.user);
+  const logout = useUserStore((state) => state.logout);
+  
+  const [mesas, setMesas] = useState<Table[]>([]);
+  const [cargando, setCargando] = useState(true);
 
-  const cargarMesas = async () => {
-    try {
-      // USAMOS TU IP REAL PARA LA CONEXIÓN
-      const respuesta = await fetch("http://192.168.1.9:3000/api/tables", { cache: 'no-store' });
-      const datos = await respuesta.json();
-      setMesas(datos);
-      setCargando(false);
-    } catch (error) {
-      console.error("Error al conectar:", error);
-    }
-  };
-
+  // 1. Carga inicial y WebSockets
   useEffect(() => {
-    cargarMesas();
-    const intervalo = setInterval(cargarMesas, 5000); // Actualiza cada 5 segundos
-    return () => clearInterval(intervalo);
-  }, []);
-
-  const getEstilosMesa = (status: string) => {
-    switch (status) {
-      case "libre": return "bg-green-500 border-green-700 text-white hover:bg-green-400";
-      case "ocupada": return "bg-orange-500 border-orange-700 text-white hover:bg-orange-400";
-      case "atencion": return "bg-yellow-400 border-yellow-600 text-neutral-900 hover:bg-yellow-300";
-      default: return "bg-neutral-500 border-neutral-700 text-white";
+    if (!user) {
+      router.push("/");
+      return;
     }
+
+    const fetchMesas = async () => {
+      try {
+        const res = await fetch("http://192.168.1.9:3000/api/tables");
+        if (!res.ok) throw new Error("Error en red");
+        const data = await res.json();
+        setMesas(data);
+        setCargando(false);
+      } catch (error) {
+        toast.error("Error al cargar el mapa de mesas");
+        setCargando(false);
+      }
+    };
+    
+    fetchMesas();
+
+    const socket = io("http://192.168.1.9:3000");
+    
+    socket.on("estado_mesa_actualizado", (data: { id: number, status: string }) => {
+      setMesas((mesasActuales) => 
+        mesasActuales.map((m) => m.id === data.id ? { ...m, status: data.status } : m)
+      );
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, [user, router]);
+
+  // 2. FUNCIÓN ACTUALIZADA: Validación de seguridad y modo edición
+  const handleMesaClick = async (mesa: Table) => {
+    // Si la mesa está ocupada, verificamos quién la tiene
+    if (mesa.status.toLowerCase() === "ocupada") {
+      try {
+        const res = await fetch(`http://192.168.1.9:3000/api/orders/table/${mesa.id}`);
+        const ordenActiva = await res.json();
+
+        // VALIDACIÓN: Si hay una orden y el usuario logueado NO es el que la creó
+        if (ordenActiva && ordenActiva.userId !== user?.id) {
+          toast.error(`Mesa ${mesa.number} Bloqueada`, {
+            description: `Esta mesa está siendo atendida por ${ordenActiva.user?.name || 'otro mesero'}.`,
+            icon: <Lock size={16} />,
+            style: { background: '#171717', color: '#f97316', border: '1px solid #f97316' }
+          });
+          return;
+        }
+
+        // Si es el mismo mesero, lo enviamos en modo EDICIÓN
+        router.push(`/mesas/${mesa.id}?edit=true`);
+      } catch (error) {
+        toast.error("Error al verificar disponibilidad");
+      }
+      return;
+    }
+
+    // Si está libre, entra normal para una nueva orden
+    router.push(`/mesas/${mesa.id}`);
   };
 
-  if (cargando) return (
-    <div className="h-screen bg-neutral-900 flex flex-col items-center justify-center text-white">
-      <Loader2 className="animate-spin text-orange-500 mb-4" size={50} />
-      <p className="text-xl font-bold italic">Preparando el salón de Entre Fuegos...</p>
-    </div>
-  );
+  const handleCerrarSesion = () => {
+    logout();
+    router.push("/");
+  };
 
   return (
-    <div className="min-h-screen bg-neutral-100 font-sans flex flex-col">
-      <header className="flex justify-between items-center bg-white px-6 py-4 shadow-sm border-b border-neutral-200 z-10">
-        <div className="flex items-center gap-4">
-          <div className="w-10 h-10 rounded-full bg-red-600 flex items-center justify-center">
-            <span className="text-white font-bold text-xl">🔥</span>
-          </div>
-          <h1 className="text-2xl font-bold text-neutral-800 tracking-tight">Entre Fuegos</h1>
+    <div className="min-h-screen bg-neutral-950 text-white font-light p-6">
+      
+      {/* Barra superior de identidad */}
+      <div className="flex justify-between items-center mb-10 border-b border-neutral-800 pb-4">
+        <div>
+          <h1 className="text-3xl font-light text-neutral-200 tracking-wide">
+            Salón <span className="text-orange-500 font-bold">Principal</span>
+          </h1>
+          <p className="text-neutral-500 text-sm flex items-center gap-2 mt-1">
+            <UserIcon size={14} className="text-orange-500" />
+            Mesero: <span className="font-medium text-neutral-300">{user?.name || "Desconocido"}</span>
+          </p>
         </div>
-        <div className="flex items-center gap-6">
-          <div className="text-right leading-tight">
-            <p className="text-xs text-neutral-500 italic">
-                {user?.role === "ADMIN" ? "Administrador" : "Mesero"}
-            </p>
-            <p className="font-bold text-neutral-800">{user?.name || "Sesión activa"}</p>
-          </div>
-          <button onClick={() => { logout(); router.push("/"); }} className="text-neutral-400 hover:text-red-500 transition-colors">
-            <LogOut size={24} />
-          </button>
-        </div>
-      </header>
 
-      <main className="flex-1 p-6 flex justify-center items-center bg-neutral-200">
-        <div className="relative w-full max-w-[1200px] h-[750px] bg-[url('https://img.pikbest.com/wp/202408/rustic-vintage-vertical-wooden-texture-background-a-and-feel_9909667.jpg!bw700')] bg-cover bg-center rounded-xl shadow-2xl border-8 border-neutral-800 overflow-hidden">
-          <div className="absolute inset-0 bg-black/30" />
+        <button 
+          onClick={handleCerrarSesion}
+          className="p-3 bg-neutral-900 rounded-full hover:bg-neutral-800 transition-colors border border-neutral-800 text-neutral-400 hover:text-red-500"
+        >
+          <LogOut size={20} />
+        </button>
+      </div>
 
-          {mesas.map((mesa) => (
-            <motion.button
-              key={mesa.id}
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              style={{ top: `${mesa.y}%`, left: `${mesa.x}%`, transform: 'translate(-50%, -50%)', position: 'absolute' }}
-              className={`flex flex-col items-center justify-center w-24 h-24 md:w-28 md:h-28 rounded-full border-[6px] shadow-2xl transition-all z-10 ${getEstilosMesa(mesa.status)}`}
-            >
-              <span className="text-[10px] font-bold uppercase opacity-80">Mesa</span>
-              <span className="text-3xl font-black">{mesa.number}</span>
-              <div className="mt-1 flex flex-col items-center">
-                <div className="flex items-center gap-1 text-[10px] font-bold uppercase">
-                  {mesa.status === "libre" ? <Utensils size={12}/> : <Bell size={12}/>}
-                  {mesa.status}
-                </div>
-                <div className="flex items-center gap-1 text-[9px] opacity-90 font-bold">
-                  <Users size={10} /> {mesa.capacity} px
-                </div>
-              </div>
-            </motion.button>
-          ))}
+      {/* Renderizado del Mapa de Mesas */}
+      {cargando ? (
+        <div className="flex justify-center items-center h-64 text-orange-500/50 animate-pulse text-xl">
+          Cargando mapa de brasas...
         </div>
-      </main>
+      ) : (
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+          {mesas.map((mesa) => {
+            const estaOcupada = mesa.status.toLowerCase() === "ocupada";
+
+            return (
+              <button
+                key={mesa.id}
+                onClick={() => handleMesaClick(mesa)}
+                className={`
+                  relative flex flex-col items-center justify-center p-8 rounded-[2.5rem] border transition-all duration-500 group
+                  ${estaOcupada 
+                    ? "bg-neutral-900 border-orange-600/30 shadow-[0_0_30px_rgba(249,115,22,0.1)]" 
+                    : "bg-neutral-900/40 border-green-500/20 hover:border-green-500 shadow-none hover:shadow-[0_0_20px_rgba(34,197,94,0.1)]"
+                  }
+                `}
+              >
+                {/* Punto de estado */}
+                <div className={`absolute top-4 right-4 w-3 h-3 rounded-full ${estaOcupada ? "bg-orange-500 shadow-[0_0_10px_#f97316]" : "bg-green-500 shadow-[0_0_10px_#22c55e]"}`}></div>
+                
+                <span className={`text-5xl font-light mb-2 transition-colors duration-300 ${estaOcupada ? "text-orange-500" : "text-neutral-200 group-hover:text-green-400"}`}>
+                  {mesa.number}
+                </span>
+                
+                <span className="text-[10px] tracking-[0.3em] uppercase text-neutral-500">
+                  {estaOcupada ? "En Servicio" : "Disponible"}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

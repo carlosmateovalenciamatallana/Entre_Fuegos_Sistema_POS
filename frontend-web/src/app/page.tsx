@@ -27,31 +27,40 @@ export default function LoginScreen() {
     setChispas(nuevasChispas);
   }, []);
 
-  const validarPin = async (pinAValidar: string) => {
-    try {
-      setCargando(true);
-      const respuesta = await fetch('http://192.168.1.9:3000/api/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pin: pinAValidar })
-      });
-      const data = await respuesta.json();
 
-      if (respuesta.ok) {
-        toast.success(data.mensaje);
-        login(data.usuario); 
-        router.push('/mesas'); 
+  
+const validarPin = async (pinAValidar: string) => {
+  try {
+    setCargando(true);
+    const respuesta = await fetch('http://192.168.1.9:3000/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pin: pinAValidar })
+    });
+    const data = await respuesta.json();
+
+    if (respuesta.ok) {
+      toast.success(data.mensaje);
+      login(data.usuario); 
+
+      // --- LÓGICA DE REDIRECCIÓN POR ROL ---
+      if (data.usuario.role === 'ADMIN') {
+        router.push('/admin/comandas'); // Redirige al panel de administrador
       } else {
-        toast.error(data.error);
-        setPin(""); 
+        router.push('/mesas'); // Redirige al mapa de mesas para meseros
       }
-    } catch (error) {
-      toast.error("Error de conexión");
-      setPin("");
-    } finally {
-      setCargando(false);
+      
+    } else {
+      toast.error(data.error);
+      setPin(""); 
     }
-  };
+  } catch (error) {
+    toast.error("Error de conexión");
+    setPin("");
+  } finally {
+    setCargando(false);
+  }
+};
 
   const handlePress = (num: string) => {
     if (pin.length < 4 && !cargando) {
