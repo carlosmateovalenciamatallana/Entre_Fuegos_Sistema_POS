@@ -58,6 +58,9 @@ model OrderItem {
   id        Int      @id @default(autoincrement())
   quantity  Int
   notes     String?  // Ej: "Sin cebolla", "Término medio"
+
+  // ---> NUEVO CAMPO IHC: ESTADO EN COCINA <---
+  cookStatus String   @default("PENDIENTE") // Estados: PENDIENTE, PREPARANDO, LISTO
   
   orderId   Int
   order     Order    @relation(fields: [orderId], references: [id])
@@ -74,3 +77,4 @@ model Waitlist {
   status    String   @default("WAITING") // Estados: WAITING, SEATED, CANCELLED
   createdAt DateTime @default(now())
 }
+

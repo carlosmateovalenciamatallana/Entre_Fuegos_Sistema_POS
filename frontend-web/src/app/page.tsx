@@ -1,12 +1,15 @@
+// src/app/page.tsx
 "use client";
-import { useState, useEffect } from "react"; // Añadimos useEffect
+import { useState, useEffect } from "react"; 
 import { Delete, ArrowRight } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { useUserStore } from "../store/userStore";
 
-import "./globals.css"; 
+// CORRECCIÓN 1: Usamos el alias oficial @/ que nunca falla
+import { useUserStore } from "@/store/userStore"; 
+
+// CORRECCIÓN 2: Eliminamos la línea de import "./globals.css" porque layout.tsx ya lo hace
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -14,10 +17,8 @@ export default function LoginScreen() {
   const [pin, setPin] = useState("");
   const [cargando, setCargando] = useState(false);
   
-  // NUEVO: Estado para las chispas para evitar el error de Hydration
   const [chispas, setChispas] = useState<{top: string, left: string, duration: string}[]>([]);
 
-  // NUEVO: Generamos las posiciones solo una vez que el componente monta en el cliente
   useEffect(() => {
     const nuevasChispas = [...Array(20)].map(() => ({
       top: `${Math.random() * 100}%`,
@@ -27,40 +28,40 @@ export default function LoginScreen() {
     setChispas(nuevasChispas);
   }, []);
 
+  const validarPin = async (pinAValidar: string) => {
+    try {
+      setCargando(true);
+      const respuesta = await fetch(process.env.NEXT_PUBLIC_API_URL + '/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pin: pinAValidar })
+      });
+      const data = await respuesta.json();
 
-  
-const validarPin = async (pinAValidar: string) => {
-  try {
-    setCargando(true);
-    const respuesta = await fetch(process.env.NEXT_PUBLIC_API_URL + '/api/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ pin: pinAValidar })
-    });
-    const data = await respuesta.json();
+      if (respuesta.ok) {
+        toast.success(data.mensaje);
+        login(data.usuario); 
 
-    if (respuesta.ok) {
-      toast.success(data.mensaje);
-      login(data.usuario); 
-
-      // --- LÓGICA DE REDIRECCIÓN POR ROL ---
-      if (data.usuario.role === 'ADMIN') {
-        router.push('/admin/comandas'); // Redirige al panel de administrador
+        // --- LÓGICA DE REDIRECCIÓN POR ROL (IHC) ---
+        if (data.usuario.role === 'ADMIN') {
+          router.push('/admin/comandas');
+        } else if (data.usuario.role === 'COCINA') {
+          router.push('/cocina'); 
+        } else {
+          router.push('/mesas'); 
+        }
+        
       } else {
-        router.push('/mesas'); // Redirige al mapa de mesas para meseros
+        toast.error(data.error);
+        setPin(""); 
       }
-      
-    } else {
-      toast.error(data.error);
-      setPin(""); 
+    } catch (error) {
+      toast.error("Error de conexión");
+      setPin("");
+    } finally {
+      setCargando(false);
     }
-  } catch (error) {
-    toast.error("Error de conexión");
-    setPin("");
-  } finally {
-    setCargando(false);
-  }
-};
+  };
 
   const handlePress = (num: string) => {
     if (pin.length < 4 && !cargando) {
@@ -75,10 +76,8 @@ const validarPin = async (pinAValidar: string) => {
   return (
     <div className="min-h-screen bg-neutral-950 text-white font-sans flex flex-col items-center justify-center p-6 relative overflow-hidden">
       
-      {/* 1. EFECTO DE RESPLANDOR (Fuego de fondo) */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(249,115,22,0.15)_0%,_transparent_75%)] pointer-events-none" />
       
-      {/* 2. LOGO/TÍTULO ESTILO PREMIUM */}
       <motion.div 
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -92,14 +91,11 @@ const validarPin = async (pinAValidar: string) => {
         </p>
       </motion.div>
 
-      {/* 3. INDICADORES DE PIN (TAMAÑO GRANDE) */}
       <div className="flex justify-center gap-10 mb-20 z-10 w-full">
         {[...Array(4)].map((_, i) => (
           <motion.div
             key={i}
-            animate={{ 
-              scale: pin.length > i ? 1.3 : 1,
-            }}
+            animate={{ scale: pin.length > i ? 1.3 : 1 }}
             className={`w-6 h-6 rounded-full border-2 border-neutral-700 transition-all duration-300 shadow-[0_0_20px_rgba(249,115,22,0.4)] ${
               pin.length > i ? 'bg-orange-500 border-orange-500 shadow-orange-500/60' : 'bg-transparent'
             }`}
@@ -107,7 +103,6 @@ const validarPin = async (pinAValidar: string) => {
         ))}
       </div>
 
-      {/* 4. TECLADO NUMÉRICO (CENTRADO Y PROPORCIONAL) */}
       <div className="z-10 w-full max-w-[340px] md:max-w-[400px]">
         <div className="grid grid-cols-3 gap-y-8 gap-x-8 justify-items-center">
           {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
@@ -156,7 +151,6 @@ const validarPin = async (pinAValidar: string) => {
         </div>
       </div>
 
-      {/* 5. DECORACIÓN DE CHISPAS (CORREGIDA) */}
       <div className="absolute inset-0 pointer-events-none opacity-20">
         {chispas.map((chispa, i) => (
           <div 

@@ -54,6 +54,17 @@ export default function MesasPage() {
       );
     });
 
+    // --- ESCUCHADOR IHC: NOTIFICACIÓN DE COCINA (KDS) ---
+    socket.on("item_cook_status_updated", (data) => {
+      // Validamos que el plato esté LISTO y que el mesero actual sea el dueño de ese pedido
+      if (data.cookStatus === 'LISTO' && data.order.userId === user?.id) {
+        toast.success(
+          `🍽️ ¡ATENCIÓN! ${data.product.name} de la MESA ${data.order.table.number} está LISTO en cocina.`, 
+          { duration: 8000 } 
+        );
+      }
+    });
+
     return () => {
       socket.disconnect();
     };

@@ -10,6 +10,7 @@ import {
   Plus, X, Edit3, Trash2, CheckCircle, AlertTriangle, Info 
 } from "lucide-react";
 import { toast } from "sonner";
+import { io } from "socket.io-client"; // <-- NUEVA IMPORTACIÓN PARA EL TIEMPO REAL
 
 interface Product {
   id: number;
@@ -47,6 +48,7 @@ export default function TomaPedidosPage({ params }: { params: Promise<{ id: stri
   const [itemParaEditarNota, setItemParaEditarNota] = useState<any>(null);
   const [notaEditadaTemporal, setNotaEditadaTemporal] = useState("");
 
+  // 1. EFECTO: CARGAR DATOS INICIALES
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -71,7 +73,27 @@ export default function TomaPedidosPage({ params }: { params: Promise<{ id: stri
     fetchData();
   }, [mesaId, isEdit]);
 
-// --- ACCIONES BACKEND ---
+  // --- 2. NUEVO EFECTO IHC: ESCUCHADOR DE COCINA EN TIEMPO REAL ---
+  useEffect(() => {
+    const socket = io(process.env.NEXT_PUBLIC_API_URL + "");
+
+    socket.on("item_cook_status_updated", (data) => {
+      // Si el plato está LISTO y el dueño de este pedido es el mesero que tiene la tablet
+      if (data.cookStatus === 'LISTO' && data.order.userId === user?.id) {
+        toast.success(
+          `🍽️ ¡ATENCIÓN! ${data.product.name} de la MESA ${data.order.table.number} está LISTO en cocina.`, 
+          { duration: 8000 } 
+        );
+      }
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, [user]); // Dependencia del user para saber quién está logueado
+
+
+  // --- ACCIONES BACKEND ---
   const ejecutarEliminacion = async () => {
     if (!itemParaEliminar) return;
     try {
@@ -82,13 +104,11 @@ export default function TomaPedidosPage({ params }: { params: Promise<{ id: stri
         const data = await res.json();
         
         if (data.mesaLiberada) {
-          // Si era el último producto, la mesa se libera y lo devolvemos al inicio
           toast.success("Mesa vaciada y liberada", { id: toastId });
           setItemParaEliminar(null);
           clearOrder();
           router.push("/mesas"); 
         } else {
-          // Si aún quedan productos, solo lo quitamos de la lista visual
           setItemsYaPedidos(prev => prev.filter(i => i.id !== itemParaEliminar.id));
           toast.success("Producto eliminado", { id: toastId });
           setItemParaEliminar(null);

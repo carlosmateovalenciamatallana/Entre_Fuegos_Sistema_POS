@@ -352,7 +352,47 @@ app.patch('/api/waitlist/:id/seat', async (req, res) => {
   }
 });
 
+// --- RUTAS IHC: PANTALLA DE COCINA (KDS) ---
 
+// 19. Obtener comandas activas solo con ítems para preparar
+app.get('/api/kitchen/orders', async (req, res) => {
+  try {
+    const orders = await prisma.order.findMany({
+      where: { status: { in: ['PENDIENTE', 'PREPARANDO'] } },
+      include: {
+        table: true,
+        user: true,
+        items: {
+          where: { cookStatus: { not: 'LISTO' } }, // La cocina no necesita ver lo que ya salió
+          include: { product: true },
+          orderBy: { id: 'asc' }
+        }
+      },
+      orderBy: { createdAt: 'asc' } // Prioridad: El pedido más viejo va primero
+    });
+    // Filtramos para enviar solo órdenes que tengan platos pendientes
+    const activeKitchenOrders = orders.filter(o => o.items.length > 0);
+    res.json(activeKitchenOrders);
+  } catch (error) { res.status(500).json({ error: 'Error en cocina' }); }
+});
+
+// 20. Actualizar el estado de preparación de un plato específico
+app.patch('/api/order-items/:id/cook-status', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { cookStatus } = req.body;
+    
+    const updatedItem = await prisma.orderItem.update({
+      where: { id: Number(id) },
+      data: { cookStatus },
+      include: { product: true, order: { include: { table: true } } }
+    });
+    
+    // Avisamos por Sockets para que la tablet del mesero reciba la notificación
+    io.emit('item_cook_status_updated', updatedItem);
+    res.json(updatedItem);
+  } catch (error) { res.status(500).json({ error: 'Error al actualizar plato' }); }
+});
 
 
 // --- TIEMPO REAL ---
