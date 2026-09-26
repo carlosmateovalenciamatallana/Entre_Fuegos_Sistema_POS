@@ -300,6 +300,61 @@ app.get('/api/orders/history-by-date', async (req, res) => {
   }
 });
 
+
+
+// --- RUTAS DE LISTA DE ESPERA (NUEVO) ---
+
+// 16. Obtener la lista de espera activa
+app.get('/api/waitlist', async (req, res) => {
+  try {
+    const list = await prisma.waitlist.findMany({
+      where: { status: 'WAITING' },
+      orderBy: { createdAt: 'asc' } // Orden cronológico (el que llegó primero va primero)
+    });
+    res.json(list);
+  } catch (error) {
+    res.status(500).json({ error: 'Error al cargar lista de espera' });
+  }
+});
+
+// 17. Añadir un cliente a la lista de espera
+app.post('/api/waitlist', async (req, res) => {
+  try {
+    const { name, partySize, phone } = req.body;
+    const entry = await prisma.waitlist.create({
+      data: {
+        name,
+        partySize: Number(partySize),
+        phone: phone || "",
+        status: 'WAITING'
+      }
+    });
+    // Avisamos a todos los dispositivos por Sockets
+    io.emit('waitlist_updated', entry); 
+    res.json(entry);
+  } catch (error) {
+    res.status(500).json({ error: 'Error al añadir a lista' });
+  }
+});
+
+// 18. Asignar mesa (Quitar de la lista de espera)
+app.patch('/api/waitlist/:id/seat', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updated = await prisma.waitlist.update({
+      where: { id: Number(id) },
+      data: { status: 'SEATED' }
+    });
+    io.emit('waitlist_updated', updated);
+    res.json({ mensaje: "Cliente asignado a mesa", updated });
+  } catch (error) {
+    res.status(500).json({ error: 'Error al actualizar lista' });
+  }
+});
+
+
+
+
 // --- TIEMPO REAL ---
 io.on('connection', (socket) => {
   console.log('📱 Dispositivo conectado:', socket.id);
