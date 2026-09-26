@@ -33,7 +33,7 @@ export default function MesasPage() {
 
     const fetchMesas = async () => {
       try {
-        const res = await fetch("http://192.168.1.9:3000/api/tables");
+        const res = await fetch(process.env.NEXT_PUBLIC_API_URL + "/api/tables");
         if (!res.ok) throw new Error("Error en red");
         const data = await res.json();
         setMesas(data);
@@ -46,7 +46,7 @@ export default function MesasPage() {
     
     fetchMesas();
 
-    const socket = io("http://192.168.1.9:3000");
+    const socket = io(process.env.NEXT_PUBLIC_API_URL + "");
     
     socket.on("estado_mesa_actualizado", (data: { id: number, status: string }) => {
       setMesas((mesasActuales) => 
@@ -64,7 +64,7 @@ export default function MesasPage() {
     // Si la mesa está ocupada, verificamos quién la tiene
     if (mesa.status.toLowerCase() === "ocupada") {
       try {
-        const res = await fetch(`http://192.168.1.9:3000/api/orders/table/${mesa.id}`);
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/orders/table/${mesa.id}`);
         const ordenActiva = await res.json();
 
         // VALIDACIÓN: Si hay una orden y el usuario logueado NO es el que la creó

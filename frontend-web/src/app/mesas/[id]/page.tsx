@@ -50,12 +50,12 @@ export default function TomaPedidosPage({ params }: { params: Promise<{ id: stri
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const resMenu = await fetch("http://192.168.1.9:3000/api/products");
+        const resMenu = await fetch(process.env.NEXT_PUBLIC_API_URL + "/api/products");
         const menuData = await resMenu.json();
         setProductos(menuData);
 
         if (isEdit) {
-          const resOrden = await fetch(`http://192.168.1.9:3000/api/orders/table/${mesaId}`);
+          const resOrden = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/orders/table/${mesaId}`);
           const ordenData = await resOrden.json();
           if (ordenData) {
             setOrdenIdExistente(ordenData.id);
@@ -76,7 +76,7 @@ export default function TomaPedidosPage({ params }: { params: Promise<{ id: stri
     if (!itemParaEliminar) return;
     try {
       const toastId = toast.loading("Eliminando...");
-      const res = await fetch(`http://192.168.1.9:3000/api/order-items/${itemParaEliminar.id}`, { method: 'DELETE' });
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/order-items/${itemParaEliminar.id}`, { method: 'DELETE' });
       
       if (res.ok) {
         const data = await res.json();
@@ -104,7 +104,7 @@ export default function TomaPedidosPage({ params }: { params: Promise<{ id: stri
   const guardarNotaEditada = async () => {
     if (!itemParaEditarNota) return;
     try {
-      const res = await fetch(`http://192.168.1.9:3000/api/order-items/${itemParaEditarNota.id}/notes`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/order-items/${itemParaEditarNota.id}/notes`, {
         method: 'PATCH',
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ notes: notaEditadaTemporal })
@@ -136,7 +136,7 @@ export default function TomaPedidosPage({ params }: { params: Promise<{ id: stri
 
     try {
       const toastId = toast.loading(isEdit ? "Actualizando..." : "Enviando a cocina...");
-      const url = isEdit ? `http://192.168.1.9:3000/api/orders/${ordenIdExistente}/add-items` : `http://192.168.1.9:3000/api/orders`;
+      const url = isEdit ? `${process.env.NEXT_PUBLIC_API_URL}/api/orders/${ordenIdExistente}/add-items` : `${process.env.NEXT_PUBLIC_API_URL}/api/orders`;
       
       const respuesta = await fetch(url, {
         method: isEdit ? 'PATCH' : 'POST',

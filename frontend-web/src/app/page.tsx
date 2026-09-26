@@ -32,7 +32,7 @@ export default function LoginScreen() {
 const validarPin = async (pinAValidar: string) => {
   try {
     setCargando(true);
-    const respuesta = await fetch('http://192.168.1.9:3000/api/login', {
+    const respuesta = await fetch(process.env.NEXT_PUBLIC_API_URL + '/api/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ pin: pinAValidar })

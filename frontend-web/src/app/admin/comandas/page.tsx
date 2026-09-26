@@ -38,9 +38,9 @@ export default function AdminComandasPage() {
     const fetchData = async () => {
       try {
         const [resVivas, resHoy, resFechas] = await Promise.all([
-          fetch("http://192.168.1.9:3000/api/orders/active"),
-          fetch("http://192.168.1.9:3000/api/orders/history"),
-          fetch("http://192.168.1.9:3000/api/orders/archive-dates")
+          fetch(process.env.NEXT_PUBLIC_API_URL + "/api/orders/active"),
+          fetch(process.env.NEXT_PUBLIC_API_URL + "/api/orders/history"),
+          fetch(process.env.NEXT_PUBLIC_API_URL + "/api/orders/archive-dates")
         ]);
         if (resVivas.ok) setComandas(await resVivas.json());
         if (resHoy.ok) setHistorialHoy(await resHoy.json());
@@ -52,12 +52,12 @@ export default function AdminComandasPage() {
     fetchData();
 
     // --- CONEXIÓN EN TIEMPO REAL ---
-    const socket = io("http://192.168.1.9:3000");
+    const socket = io(process.env.NEXT_PUBLIC_API_URL + "");
     
     socket.on("nueva_orden_creada", (nueva) => setComandas(p => [nueva, ...p]));
     
     socket.on("orden_finalizada_admin", async () => {
-       const resHoy = await fetch("http://192.168.1.9:3000/api/orders/history");
+       const resHoy = await fetch(process.env.NEXT_PUBLIC_API_URL + "/api/orders/history");
        if (resHoy.ok) setHistorialHoy(await resHoy.json());
     });
 
@@ -97,7 +97,7 @@ export default function AdminComandasPage() {
   // --- 3. ACCIONES Y FUNCIONES ---
   const verDiaPasado = async (dateStr: string) => {
     const soloFecha = dateStr.split('T')[0];
-    const res = await fetch(`http://192.168.1.9:3000/api/orders/history-by-date?date=${soloFecha}`);
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/orders/history-by-date?date=${soloFecha}`);
     if (res.ok) {
       setHistorialPasado(await res.json());
       setFechaSeleccionada(soloFecha);
@@ -115,7 +115,7 @@ export default function AdminComandasPage() {
 
   const handleCompletarOrden = async (orderId: number, tableNumber: number) => {
     try {
-      const res = await fetch(`http://192.168.1.9:3000/api/orders/${orderId}/complete`, { method: 'PATCH' });
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/orders/${orderId}/complete`, { method: 'PATCH' });
       if (res.ok) {
         setComandas(p => p.filter(c => c.id !== orderId));
         toast.success(`Mesa ${tableNumber} finalizada y cobrada.`);
