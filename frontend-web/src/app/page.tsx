@@ -5,18 +5,13 @@ import { Delete, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-
-// CORRECCIÓN 1: Usamos el alias oficial @/ que nunca falla
 import { useUserStore } from "@/store/userStore"; 
-
-// CORRECCIÓN 2: Eliminamos la línea de import "./globals.css" porque layout.tsx ya lo hace
 
 export default function LoginScreen() {
   const router = useRouter();
   const { login } = useUserStore();
   const [pin, setPin] = useState("");
   const [cargando, setCargando] = useState(false);
-  
   const [chispas, setChispas] = useState<{top: string, left: string, duration: string}[]>([]);
 
   useEffect(() => {
@@ -41,7 +36,6 @@ export default function LoginScreen() {
       if (respuesta.ok) {
         toast.success(data.mensaje);
         login(data.usuario); 
-
         // --- LÓGICA DE REDIRECCIÓN POR ROL (IHC) ---
         if (data.usuario.role === 'ADMIN') {
           router.push('/admin/comandas');
@@ -49,11 +43,10 @@ export default function LoginScreen() {
           router.push('/cocina'); 
         } else {
           router.push('/mesas'); 
-        }
-        
+        }               
       } else {
         toast.error(data.error);
-        setPin(""); 
+        setPin("");       
       }
     } catch (error) {
       toast.error("Error de conexión");
@@ -74,16 +67,18 @@ export default function LoginScreen() {
   const handleDelete = () => { if (!cargando) setPin(pin.slice(0, -1)); };
 
   return (
-    <div className="min-h-screen bg-neutral-950 text-white font-sans flex flex-col items-center justify-center p-6 relative overflow-hidden">
-      
+    // AQUÍ ESTÁ LA MAGIA 1: bg-neutral-50 para modo claro, dark:bg-neutral-950 para oscuro
+    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 text-neutral-900 dark:text-white font-sans flex flex-col items-center justify-center p-6 relative overflow-hidden transition-colors duration-500">
+             
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(249,115,22,0.15)_0%,_transparent_75%)] pointer-events-none" />
-      
+             
       <motion.div 
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         className="text-center z-10 mb-12"
       >
-        <h1 className="text-5xl md:text-6xl font-extralight tracking-[0.2em] mb-2 text-orange-100/90">
+        {/* MAGIA 2: Título adaptable */}
+        <h1 className="text-5xl md:text-6xl font-extralight tracking-[0.2em] mb-2 text-neutral-800 dark:text-orange-100/90 transition-colors">
           ENTRE <span className="font-semibold text-orange-500">FUEGOS</span>
         </h1>
         <p className="text-neutral-500 tracking-[0.4em] text-xs uppercase font-light">
@@ -96,8 +91,10 @@ export default function LoginScreen() {
           <motion.div
             key={i}
             animate={{ scale: pin.length > i ? 1.3 : 1 }}
-            className={`w-6 h-6 rounded-full border-2 border-neutral-700 transition-all duration-300 shadow-[0_0_20px_rgba(249,115,22,0.4)] ${
-              pin.length > i ? 'bg-orange-500 border-orange-500 shadow-orange-500/60' : 'bg-transparent'
+            className={`w-6 h-6 rounded-full border-2 transition-all duration-300 ${
+              pin.length > i 
+                ? 'bg-orange-500 border-orange-500 shadow-[0_0_20px_rgba(249,115,22,0.6)]' 
+                : 'bg-transparent border-neutral-300 dark:border-neutral-700'
             }`}
           />
         ))}
@@ -108,29 +105,30 @@ export default function LoginScreen() {
           {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
             <motion.button
               key={num}
-              whileHover={{ scale: 1.05, backgroundColor: "rgba(38, 38, 38, 0.6)" }}
-              whileTap={{ scale: 0.95, backgroundColor: "#f97316", boxShadow: "0 0 30px rgba(249,115,22,0.6)" }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95, backgroundColor: "#f97316", color: "white", borderColor: "#f97316", boxShadow: "0 0 30px rgba(249,115,22,0.6)" }}
               onClick={() => handlePress(num.toString())}
               disabled={cargando}
-              className="w-20 h-20 md:w-24 md:h-24 rounded-full border border-neutral-800 bg-neutral-900/40 text-3xl md:text-4xl font-light flex items-center justify-center transition-all text-neutral-300 hover:border-orange-500/40"
+              // MAGIA 3: Botones adaptables (blancos en modo claro, oscuros en modo dark)
+              className="w-20 h-20 md:w-24 md:h-24 rounded-full border bg-white border-neutral-300 text-neutral-800 dark:bg-neutral-900/40 dark:border-neutral-800 dark:text-neutral-300 text-3xl md:text-4xl font-light flex items-center justify-center transition-all hover:border-orange-500/40 dark:hover:border-orange-500/40"
             >
               {num}
             </motion.button>
           ))}
-          
+                     
           <motion.button
             whileTap={{ scale: 0.9 }}
             onClick={handleDelete}
-            className="w-20 h-20 md:w-24 md:h-24 flex items-center justify-center text-neutral-600 hover:text-red-400 transition-colors"
+            className="w-20 h-20 md:w-24 md:h-24 flex items-center justify-center text-neutral-400 hover:text-red-500 transition-colors"
           >
             <Delete size={36} strokeWidth={1} />
           </motion.button>
 
           <motion.button
-            whileHover={{ scale: 1.05, backgroundColor: "rgba(38, 38, 38, 0.6)" }}
-            whileTap={{ scale: 0.95 }}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95, backgroundColor: "#f97316", color: "white", borderColor: "#f97316" }}
             onClick={() => handlePress("0")}
-            className="w-20 h-20 md:w-24 md:h-24 rounded-full border border-neutral-800 bg-neutral-900/40 text-3xl md:text-4xl font-light flex items-center justify-center text-neutral-300"
+            className="w-20 h-20 md:w-24 md:h-24 rounded-full border bg-white border-neutral-300 text-neutral-800 dark:bg-neutral-900/40 dark:border-neutral-800 dark:text-neutral-300 text-3xl md:text-4xl font-light flex items-center justify-center transition-all hover:border-orange-500/40 dark:hover:border-orange-500/40"
           >
             0
           </motion.button>
@@ -142,8 +140,9 @@ export default function LoginScreen() {
             disabled={pin.length !== 4 || cargando}
             className={`w-20 h-20 md:w-24 md:h-24 rounded-full flex items-center justify-center border transition-all ${
               pin.length === 4 
-              ? "bg-orange-600 border-orange-500 text-white shadow-[0_0_30px_rgba(234,88,12,0.5)]" 
-              : "bg-neutral-900/40 border-neutral-800 text-neutral-800"
+               ? "bg-orange-600 border-orange-500 text-white shadow-[0_0_30px_rgba(234,88,12,0.5)]" 
+               // MAGIA 4: El botón de enter deshabilitado adaptable
+               : "bg-neutral-200 border-neutral-300 text-neutral-400 dark:bg-neutral-900/40 dark:border-neutral-800 dark:text-neutral-800"
             }`}
           >
             <ArrowRight size={36} strokeWidth={1} />

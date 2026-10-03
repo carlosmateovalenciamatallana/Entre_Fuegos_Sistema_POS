@@ -1,6 +1,5 @@
 // src/app/mesas/page.tsx
 "use client";
-
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useUserStore } from "@/store/userStore";
@@ -20,7 +19,7 @@ export default function MesasPage() {
   const router = useRouter();
   const user = useUserStore((state) => state.user);
   const logout = useUserStore((state) => state.logout);
-  
+
   const [mesas, setMesas] = useState<Table[]>([]);
   const [cargando, setCargando] = useState(true);
 
@@ -59,7 +58,7 @@ export default function MesasPage() {
       // Validamos que el plato esté LISTO y que el mesero actual sea el dueño de ese pedido
       if (data.cookStatus === 'LISTO' && data.order.userId === user?.id) {
         toast.success(
-          `🍽️ ¡ATENCIÓN! ${data.product.name} de la MESA ${data.order.table.number} está LISTO en cocina.`, 
+          `¡ATENCIÓN! ${data.product.name} de la MESA ${data.order.table.number} está LISTO en cocina.`, 
           { duration: 8000 } 
         );
       }
@@ -106,23 +105,24 @@ export default function MesasPage() {
   };
 
   return (
-    <div className="min-h-screen bg-neutral-950 text-white font-light p-6">
+    // AQUÍ ESTÁ LA MAGIA 1: Fondo claro adaptativo en el contenedor principal
+    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 text-neutral-900 dark:text-white font-light p-6 transition-colors duration-500">
       
       {/* Barra superior de identidad */}
-      <div className="flex justify-between items-center mb-10 border-b border-neutral-800 pb-4">
+      <div className="flex justify-between items-center mb-10 border-b border-neutral-200 dark:border-neutral-800 pb-4 transition-colors">
         <div>
-          <h1 className="text-3xl font-light text-neutral-200 tracking-wide">
-            Salón <span className="text-orange-500 font-bold">Principal</span>
+          <h1 className="text-3xl font-light text-neutral-800 dark:text-neutral-200 tracking-wide transition-colors">
+            Salón <span className="text-orange-600 dark:text-orange-500 font-bold">Principal</span>
           </h1>
-          <p className="text-neutral-500 text-sm flex items-center gap-2 mt-1">
+          <p className="text-neutral-500 dark:text-neutral-400 text-sm flex items-center gap-2 mt-1 transition-colors">
             <UserIcon size={14} className="text-orange-500" />
-            Mesero: <span className="font-medium text-neutral-300">{user?.name || "Desconocido"}</span>
+            Mesero: <span className="font-medium text-neutral-700 dark:text-neutral-300">{user?.name || "Desconocido"}</span>
           </p>
         </div>
-
         <button 
           onClick={handleCerrarSesion}
-          className="p-3 bg-neutral-900 rounded-full hover:bg-neutral-800 transition-colors border border-neutral-800 text-neutral-400 hover:text-red-500"
+          // MAGIA 2: Botón de salir adaptable
+          className="p-3 bg-white dark:bg-neutral-900 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors border border-neutral-200 dark:border-neutral-800 text-neutral-500 dark:text-neutral-400 hover:text-red-500 dark:hover:text-red-500 shadow-sm dark:shadow-none"
         >
           <LogOut size={20} />
         </button>
@@ -137,27 +137,27 @@ export default function MesasPage() {
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
           {mesas.map((mesa) => {
             const estaOcupada = mesa.status.toLowerCase() === "ocupada";
-
             return (
               <button
                 key={mesa.id}
                 onClick={() => handleMesaClick(mesa)}
+                // MAGIA 3: Tarjetas de las mesas con colores claros y oscuros
                 className={`
                   relative flex flex-col items-center justify-center p-8 rounded-[2.5rem] border transition-all duration-500 group
                   ${estaOcupada 
-                    ? "bg-neutral-900 border-orange-600/30 shadow-[0_0_30px_rgba(249,115,22,0.1)]" 
-                    : "bg-neutral-900/40 border-green-500/20 hover:border-green-500 shadow-none hover:shadow-[0_0_20px_rgba(34,197,94,0.1)]"
+                     ? "bg-orange-50 dark:bg-neutral-900 border-orange-500/30 dark:border-orange-600/30 shadow-[0_0_20px_rgba(249,115,22,0.15)] dark:shadow-[0_0_30px_rgba(249,115,22,0.1)]" 
+                     : "bg-white dark:bg-neutral-900/40 border-neutral-200 dark:border-green-500/20 hover:border-green-500 dark:hover:border-green-500 shadow-sm dark:shadow-none hover:shadow-[0_0_20px_rgba(34,197,94,0.15)] dark:hover:shadow-[0_0_20px_rgba(34,197,94,0.1)]"
                   }
                 `}
               >
                 {/* Punto de estado */}
                 <div className={`absolute top-4 right-4 w-3 h-3 rounded-full ${estaOcupada ? "bg-orange-500 shadow-[0_0_10px_#f97316]" : "bg-green-500 shadow-[0_0_10px_#22c55e]"}`}></div>
                 
-                <span className={`text-5xl font-light mb-2 transition-colors duration-300 ${estaOcupada ? "text-orange-500" : "text-neutral-200 group-hover:text-green-400"}`}>
+                <span className={`text-5xl font-light mb-2 transition-colors duration-300 ${estaOcupada ? "text-orange-600 dark:text-orange-500" : "text-neutral-700 dark:text-neutral-200 group-hover:text-green-600 dark:group-hover:text-green-400"}`}>
                   {mesa.number}
                 </span>
                 
-                <span className="text-[10px] tracking-[0.3em] uppercase text-neutral-500">
+                <span className="text-[10px] tracking-[0.3em] uppercase text-neutral-400 dark:text-neutral-500 font-bold transition-colors">
                   {estaOcupada ? "En Servicio" : "Disponible"}
                 </span>
               </button>

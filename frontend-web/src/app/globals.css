@@ -1,16 +1,27 @@
 /* Esta es la nueva forma para Tailwind v4 */
 @import "tailwindcss";
 
-/* Aquí abajo puedes poner tus estilos personalizados */
+/* --- MAGIA DE TAILWIND V4 --- */
+/* Esta línea le enseña a Tailwind a obedecer a nuestro botón del Sol/Luna */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* --- 1. MODO CLARO (Por defecto) --- */
 :root {
-  --background: #0a0a0a;
-  --foreground: #ededed;
+  --background: #f5f5f5; 
+  --foreground: #171717; 
+}
+
+/* --- 2. MODO OSCURO (Activo con el botón ThemeToggle) --- */
+.dark {
+  --background: #0a0a0a; 
+  --foreground: #ededed; 
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  transition: background-color 0.3s ease, color 0.3s ease; 
 }
 
 

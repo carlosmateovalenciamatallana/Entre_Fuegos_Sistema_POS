@@ -1,6 +1,4 @@
-// src/app/admin/comandas/page.tsx
 "use client";
-
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useUserStore } from "@/store/userStore";
@@ -24,7 +22,6 @@ function OrderCard({ c, handleImprimirYCobrar }: { c: any, handleImprimirYCobrar
       const differenceInMs = Date.now() - orderTime;
       setElapsedMinutes(Math.floor(differenceInMs / 60000));
     };
-
     calculateTime(); 
     const interval = setInterval(calculateTime, 60000); 
     return () => clearInterval(interval);
@@ -32,63 +29,56 @@ function OrderCard({ c, handleImprimirYCobrar }: { c: any, handleImprimirYCobrar
 
   const total = c.items.reduce((acc: number, i: any) => acc + (i.product.price * i.quantity), 0);
 
-  // Lógica del Semáforo 
-  let statusClasses = "border-t-green-500 bg-green-950/20 shadow-green-900/20";
-  let iconColor = "text-green-500";
+  let statusClasses = "border-t-green-500 bg-green-50 dark:bg-green-950/20 shadow-green-900/10 dark:shadow-green-900/20";
+  let iconColor = "text-green-600 dark:text-green-500";
   let TimeIcon = Clock;
   let pulse = "";
 
   if (elapsedMinutes >= 20) {
-    statusClasses = "border-t-red-600 bg-red-950/30 shadow-red-900/30";
-    iconColor = "text-red-500";
+    statusClasses = "border-t-red-500 bg-red-50 dark:bg-red-950/30 shadow-red-900/10 dark:shadow-red-900/30";
+    iconColor = "text-red-600 dark:text-red-500";
     TimeIcon = AlertTriangle;
     pulse = "animate-pulse"; 
   } else if (elapsedMinutes >= 10) {
-    statusClasses = "border-t-yellow-500 bg-yellow-950/20 shadow-yellow-900/20";
-    iconColor = "text-yellow-500";
+    statusClasses = "border-t-yellow-500 bg-yellow-50 dark:bg-yellow-950/20 shadow-yellow-900/10 dark:shadow-yellow-900/20";
+    iconColor = "text-yellow-600 dark:text-yellow-500";
   }
 
   return (
-    <div className={`border border-neutral-800 rounded-[2.5rem] p-7 flex flex-col relative border-t-4 group transition-colors duration-500 ${statusClasses}`}>
+    <div className={`border border-neutral-200 dark:border-neutral-800 rounded-[2.5rem] p-7 flex flex-col relative border-t-4 group transition-colors duration-500 ${statusClasses}`}>
       <div className="flex justify-between items-start mb-6">
-        <div className="bg-orange-600 text-white px-5 py-2 rounded-2xl text-2xl font-black italic shadow-lg shadow-orange-950/20">
+        <div className="bg-orange-600 text-white px-5 py-2 rounded-2xl text-2xl font-black italic shadow-lg shadow-orange-500/20">
           #{c.table.number}
         </div>
         <div className="text-right">
-          <div 
-            className={`flex items-center justify-end gap-1 font-bold text-sm mb-1 ${iconColor} ${pulse}`} 
-            aria-label={`Tiempo de espera: ${elapsedMinutes} minutos`}
-          >
+          <div className={`flex items-center justify-end gap-1 font-bold text-sm mb-1 ${iconColor} ${pulse}`} aria-label={`Tiempo de espera: ${elapsedMinutes} minutos`}>
             <TimeIcon size={14} />
             <span>{elapsedMinutes} min</span>
           </div>
           <p className="text-neutral-500 text-[10px] uppercase font-bold">{c.user.name}</p>
         </div>
       </div>
-
-      <div className="mb-6 p-4 bg-neutral-950/80 rounded-2xl border border-orange-500/10 flex justify-between items-center shadow-inner">
+      <div className="mb-6 p-4 bg-white dark:bg-neutral-950/80 rounded-2xl border border-orange-500/10 flex justify-between items-center shadow-inner">
         <span className="text-neutral-600 uppercase text-[9px] font-bold">Cuenta</span>
-        <span className="text-2xl font-mono text-orange-500 font-bold">${total.toLocaleString()}</span>
+        <span className="text-2xl font-mono text-orange-600 dark:text-orange-500 font-bold">${total.toLocaleString()}</span>
       </div>
-
       <div className="flex-1 space-y-4 mb-8 max-h-52 overflow-y-auto pr-2 custom-scrollbar">
         {c.items.map((item: any, idx: number) => (
-          <div key={idx} className="border-b border-neutral-800/40 pb-3 last:border-0">
-            <p className="text-sm text-neutral-300 font-medium">
-              <span className="text-orange-500 font-bold mr-2">{item.quantity}x</span> {item.product.name}
+          <div key={idx} className="border-b border-neutral-200 dark:border-neutral-800/40 pb-3 last:border-0">
+            <p className="text-sm text-neutral-800 dark:text-neutral-300 font-medium">
+              <span className="text-orange-600 dark:text-orange-500 font-bold mr-2">{item.quantity}x</span> {item.product.name}
             </p>
             {item.notes && (
-              <p className="text-[10px] text-orange-400/70 italic mt-1 bg-orange-500/5 p-1 px-2 rounded-lg leading-tight">
+              <p className="text-[10px] text-orange-600 dark:text-orange-400/70 italic mt-1 bg-orange-50 dark:bg-orange-500/5 p-1 px-2 rounded-lg leading-tight">
                 "{item.notes}"
               </p>
             )}
           </div>
         ))}
       </div>
-
       <button 
         onClick={() => handleImprimirYCobrar(c)} 
-        className="w-full py-4 bg-orange-600 hover:bg-orange-500 text-white rounded-[1.5rem] font-bold uppercase tracking-widest text-[10px] transition-all active:scale-95 shadow-lg shadow-orange-950/20 flex items-center justify-center gap-2"
+        className="w-full py-4 bg-orange-600 hover:bg-orange-500 text-white rounded-[1.5rem] font-bold uppercase tracking-widest text-[10px] transition-all active:scale-95 shadow-lg shadow-orange-500/20 flex items-center justify-center gap-2"
       >
         <Printer size={16} /> IMPRIMIR Y CERRAR
       </button>
@@ -99,46 +89,38 @@ function OrderCard({ c, handleImprimirYCobrar }: { c: any, handleImprimirYCobrar
 // --- COMPONENTE IHC 2: ITEM DE FILA DE ESPERA CON CONTADOR ---
 function WaitlistItem({ w, idx, mesasLibres, handleAsignarMesa }: any) {
   const [elapsedMinutes, setElapsedMinutes] = useState(0);
-
   useEffect(() => {
     const calculateTime = () => {
-      // Calculamos el tiempo desde que el cliente fue creado en Prisma
       const waitTime = new Date(w.createdAt).getTime();
       const differenceInMs = Date.now() - waitTime;
       setElapsedMinutes(Math.floor(differenceInMs / 60000));
     };
-
     calculateTime();
     const interval = setInterval(calculateTime, 60000);
     return () => clearInterval(interval);
   }, [w.createdAt]);
 
-  // Colores dinámicos para que el host sepa quién lleva demasiado tiempo esperando
-  let timeColor = "text-green-500";
-  if (elapsedMinutes >= 15) timeColor = "text-red-500 animate-pulse";
-  else if (elapsedMinutes >= 10) timeColor = "text-yellow-500";
+  let timeColor = "text-green-600 dark:text-green-500";
+  if (elapsedMinutes >= 15) timeColor = "text-red-600 dark:text-red-500 animate-pulse";
+  else if (elapsedMinutes >= 10) timeColor = "text-yellow-600 dark:text-yellow-500";
 
   return (
-    <div className="bg-neutral-900/30 p-6 rounded-3xl border border-neutral-800 flex flex-col sm:flex-row justify-between items-center gap-4">
+    <div className="bg-white dark:bg-neutral-900/30 p-6 rounded-3xl border border-neutral-200 dark:border-neutral-800 flex flex-col sm:flex-row justify-between items-center gap-4 transition-colors">
       <div className="flex items-center gap-4">
-        <div className="bg-neutral-950 p-4 rounded-2xl font-black text-2xl text-neutral-600">#{idx + 1}</div>
+        <div className="bg-neutral-100 dark:bg-neutral-950 p-4 rounded-2xl font-black text-2xl text-neutral-600 transition-colors">#{idx + 1}</div>
         <div>
-          <h3 className="font-bold text-lg">{w.name}</h3>
-          
+          <h3 className="font-bold text-lg text-neutral-900 dark:text-white">{w.name}</h3>
           <div className="flex items-center gap-3 mt-1">
-            <p className="text-xs text-orange-500 font-bold uppercase tracking-widest">{w.partySize} Personas</p>
-            {/* AQUÍ ESTÁ EL CONTADOR DE TIEMPO EN VIVO */}
+            <p className="text-xs text-orange-600 dark:text-orange-500 font-bold uppercase tracking-widest">{w.partySize} Personas</p>
             <span className={`flex items-center gap-1 text-xs font-bold ${timeColor}`} aria-label={`Esperando hace ${elapsedMinutes} minutos`}>
               <Clock size={12} /> {elapsedMinutes} min
             </span>
           </div>
-
         </div>
       </div>
-      
       <div className="flex items-center gap-2">
         <select 
-          className="bg-neutral-950 border border-neutral-800 p-3 rounded-xl outline-none text-sm cursor-pointer hover:border-orange-500 transition-all"
+          className="bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-white p-3 rounded-xl outline-none text-sm cursor-pointer hover:border-orange-500 transition-colors"
           onChange={(e) => handleAsignarMesa(w, e.target.value)}
           defaultValue=""
         >
@@ -171,39 +153,34 @@ export default function AdminComandasPage() {
   const router = useRouter();
   const { user, logout } = useUserStore();
 
-  // --- CARGA DE DATOS Y WEBSOCKETS ---
   useEffect(() => {
     if (!user || user.role !== 'ADMIN') {
       router.push("/");
       return;
     }
-
     const fetchData = async () => {
       try {
         const [resVivas, resHoy, resFechas, resWait, resTables] = await Promise.all([
           fetch(process.env.NEXT_PUBLIC_API_URL + "/api/orders/active"),
           fetch(process.env.NEXT_PUBLIC_API_URL + "/api/orders/history"),
           fetch(process.env.NEXT_PUBLIC_API_URL + "/api/orders/archive-dates"),
-          fetch(process.env.NEXT_PUBLIC_API_URL + "/api/waitlist"), // Nueva ruta
-          fetch(process.env.NEXT_PUBLIC_API_URL + "/api/tables")    // Nueva ruta
+          fetch(process.env.NEXT_PUBLIC_API_URL + "/api/waitlist"),
+          fetch(process.env.NEXT_PUBLIC_API_URL + "/api/tables")
         ]);
         if (resVivas.ok) setComandas(await resVivas.json());
         if (resHoy.ok) setHistorialHoy(await resHoy.json());
         if (resFechas.ok) setArchivoFechas(await resFechas.json());
         if (resWait.ok) setWaitlist(await resWait.json());
         if (resTables.ok) setMesasLibres(await resTables.json());
-      } catch (error) {
-        console.log("Error de conexión");
-      }
+      } catch (error) { console.log("Error de conexión"); }
     };
     fetchData();
 
-    // --- CONEXIÓN EN TIEMPO REAL ---
     const socket = io(process.env.NEXT_PUBLIC_API_URL + "");
     
     socket.on("nueva_orden_creada", (nueva) => setComandas(p => [nueva, ...p]));
     
-    socket.on("orden_finalizada_admin", async () => {
+    socket.on("orden_finalizada_admin", async () => { 
        const resHoy = await fetch(process.env.NEXT_PUBLIC_API_URL + "/api/orders/history");
        if (resHoy.ok) setHistorialHoy(await resHoy.json());
     });
@@ -218,7 +195,6 @@ export default function AdminComandasPage() {
       toast.info(`Mesa ${data.tableId} cancelada (Sin productos)`);
     });
 
-    // Escuchadores de Fila de Espera y Mesas
     socket.on("estado_mesa_actualizado", (data) => {
       setMesasLibres(prev => prev.map(m => m.id === data.id ? { ...m, status: data.status } : m));
     });
@@ -237,7 +213,6 @@ export default function AdminComandasPage() {
     return () => { socket.disconnect(); };
   }, [user, router]);
 
-  // --- LÓGICA FILA DE ESPERA (IHC) ---
   const handleAgregarEspera = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -259,7 +234,6 @@ export default function AdminComandasPage() {
     if (!tableIdStr) return;
     const mesaSeleccionada = mesasLibres.find(m => m.id === Number(tableIdStr));
     
-    // VALIDADOR IHC: Prevención de error por capacidad
     if (mesaSeleccionada && mesaSeleccionada.capacity < clienteEspera.partySize) {
       toast.error(
         `Error: El grupo es de ${clienteEspera.partySize} personas, pero la Mesa ${mesaSeleccionada.number} soporta máximo ${mesaSeleccionada.capacity}.`, 
@@ -277,7 +251,6 @@ export default function AdminComandasPage() {
     } catch (error) { toast.error("Error al asignar mesa"); }
   };
 
-  // --- ESTADÍSTICAS Y FUNCIONES EXISTENTES ---
   const calcularStats = (lista: any[]) => {
     const total = lista.reduce((acc, o) => acc + o.items.reduce((s:number, i:any) => s+(i.product.price*i.quantity),0), 0);
     const ventasPorMesa = lista.reduce((acc: any, o) => {
@@ -330,30 +303,29 @@ export default function AdminComandasPage() {
   }
 
   const formatoMoneda = (num: number) => Math.round(num).toLocaleString('es-CO');
-  const formatoMonedaDec = (num: number) => num.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
   return (
-    <div className="min-h-screen bg-neutral-950 text-white p-4 md:p-8 font-light selection:bg-orange-500/30">
+    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 text-neutral-900 dark:text-white p-4 md:p-8 font-light selection:bg-orange-500/30 transition-colors duration-500">
       
       {/* HEADER */}
-      <header className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-10 border-b border-neutral-900 pb-8 gap-6">
+      <header className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-10 border-b border-neutral-200 dark:border-neutral-900 pb-8 gap-6 transition-colors">
         <div className="flex items-center gap-5">
-          <div className="p-4 bg-orange-600/10 rounded-[2rem] border border-orange-600/20">
-            <Flame className="text-orange-500" size={32} />
+          <div className="p-4 bg-orange-100 dark:bg-orange-600/10 rounded-[2rem] border border-orange-200 dark:border-orange-600/20 transition-colors">
+            <Flame className="text-orange-600 dark:text-orange-500" size={32} />
           </div>
           <div>
-            <h1 className="text-3xl font-bold tracking-tighter">ENTRE <span className="text-orange-500">FUEGOS</span></h1>
+            <h1 className="text-3xl font-bold tracking-tighter">ENTRE <span className="text-orange-600 dark:text-orange-500">FUEGOS</span></h1>
             <div className="flex items-center gap-2 mt-1">
-              <span className="flex items-center gap-1 bg-neutral-900 px-2 py-0.5 rounded-full border border-neutral-800 text-[9px] text-orange-500 font-bold uppercase tracking-widest">
+              <span className="flex items-center gap-1 bg-white dark:bg-neutral-900 px-2 py-0.5 rounded-full border border-neutral-200 dark:border-neutral-800 text-[9px] text-orange-600 dark:text-orange-500 font-bold uppercase tracking-widest shadow-sm dark:shadow-none transition-colors">
                 <ShieldCheck size={10} /> Admin
               </span>
-              <span className="text-neutral-500 text-xs italic">Sesión de <span className="text-neutral-200 font-bold not-italic">{user?.name}</span></span>
+              <span className="text-neutral-500 text-xs italic">Sesión de <span className="text-neutral-900 dark:text-neutral-200 font-bold not-italic">{user?.name}</span></span>
             </div>
           </div>
         </div>
 
         {/* NAVEGACIÓN */}
-        <div className="flex bg-neutral-900/50 p-1.5 rounded-2xl border border-neutral-800 backdrop-blur-md w-full lg:w-auto overflow-x-auto">
+        <div className="flex bg-white dark:bg-neutral-900/50 p-1.5 rounded-2xl border border-neutral-200 dark:border-neutral-800 backdrop-blur-md w-full lg:w-auto overflow-x-auto shadow-sm dark:shadow-none transition-colors">
           {[
             { id: 'vivas', label: 'EN VIVO', icon: <LayoutDashboard size={14} /> },
             { id: 'espera', label: 'FILA ESPERA', icon: <Users size={14} /> },
@@ -363,14 +335,13 @@ export default function AdminComandasPage() {
             <button 
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
-              className={`flex-1 lg:flex-none flex whitespace-nowrap items-center justify-center gap-2 px-6 py-3 rounded-xl text-[10px] font-bold transition-all duration-500 ${activeTab === tab.id ? "bg-orange-600 text-white shadow-xl shadow-orange-900/20" : "text-neutral-500 hover:text-white"}`}
+              className={`flex-1 lg:flex-none flex whitespace-nowrap items-center justify-center gap-2 px-6 py-3 rounded-xl text-[10px] font-bold transition-all duration-500 ${activeTab === tab.id ? "bg-orange-600 text-white shadow-xl shadow-orange-500/20" : "text-neutral-500 hover:text-neutral-800 dark:hover:text-white"}`}
             >
               {tab.icon} {tab.label}
             </button>
           ))}
         </div>
-
-        <button onClick={() => { logout(); router.push("/"); }} className="p-3 bg-neutral-900 rounded-2xl border border-neutral-800 text-neutral-500 hover:text-red-500 transition-all">
+        <button onClick={() => { logout(); router.push("/"); }} className="p-3 bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 text-neutral-500 hover:text-red-500 transition-all shadow-sm dark:shadow-none">
           <LogOut size={20} />
         </button>
       </header>
@@ -378,7 +349,8 @@ export default function AdminComandasPage() {
       {/* TICKET INVISIBLE (SIN CAMBIOS) */}
       {ordenParaImprimir && (
         <div id="ticket-impresion" style={{ width: '76mm', padding: '0', background: 'white', color: 'black', fontFamily: 'monospace', fontSize: '11px', margin: '0', lineHeight: '1.2' }}>
-          <div style={{ textAlign: 'center', marginBottom: '10px' }}>
+           {/* ... Contenido del ticket de impresión se mantiene igual ... */}
+           <div style={{ textAlign: 'center', marginBottom: '10px' }}>
             <h2 style={{ fontSize: '15px', fontWeight: 'bold', margin: '0' }}>ENTRE FUEGOS GOURMET</h2>
             <p style={{ margin: '0' }}>YULY VIVIANA LOPEZ</p>
             <p style={{ margin: '0' }}>Nit: 42150101-1</p>
@@ -438,30 +410,29 @@ export default function AdminComandasPage() {
             {comandas.map((c) => (
               <OrderCard key={c.id} c={c} handleImprimirYCobrar={handleImprimirYCobrar} />
             ))}
-            {comandas.length === 0 && <div className="col-span-full py-40 text-center text-neutral-800 uppercase tracking-widest">Sin pedidos activos</div>}
+            {comandas.length === 0 && <div className="col-span-full py-40 text-center text-neutral-400 dark:text-neutral-800 uppercase tracking-widest">Sin pedidos activos</div>}
           </motion.div>
         )}
 
-        {/* --- NUEVA PESTAÑA: FILA DE ESPERA (IHC) --- */}
+        {/* --- PESTAÑA: FILA DE ESPERA (IHC) --- */}
         {activeTab === 'espera' && (
           <motion.div key="espera" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            
             {/* Formulario de Registro */}
-            <div className="bg-neutral-900/40 p-8 rounded-[2.5rem] border border-neutral-800 h-fit">
-              <h2 className="text-xl font-bold mb-6 flex items-center gap-2"><Users className="text-orange-500"/> Nuevo Cliente</h2>
+            <div className="bg-white dark:bg-neutral-900/40 p-8 rounded-[2.5rem] border border-neutral-200 dark:border-neutral-800 h-fit shadow-sm dark:shadow-none transition-colors">
+              <h2 className="text-xl font-bold mb-6 flex items-center gap-2 text-neutral-900 dark:text-white"><Users className="text-orange-500"/> Nuevo Cliente</h2>
               <form onSubmit={handleAgregarEspera} className="space-y-4">
                 <div>
                   <label className="text-[10px] text-neutral-500 uppercase font-bold">Nombre</label>
-                  <input required value={formWait.name} onChange={e => setFormWait({...formWait, name: e.target.value})} className="w-full bg-neutral-950 border border-neutral-800 p-3 rounded-xl mt-1 outline-none focus:border-orange-500" placeholder="Ej: Familia García" />
+                  <input required value={formWait.name} onChange={e => setFormWait({...formWait, name: e.target.value})} className="w-full bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 p-3 rounded-xl mt-1 outline-none focus:border-orange-500 text-neutral-900 dark:text-white transition-colors" placeholder="Ej: Familia García" />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="text-[10px] text-neutral-500 uppercase font-bold">Personas</label>
-                    <input required type="number" min="1" value={formWait.partySize} onChange={e => setFormWait({...formWait, partySize: Number(e.target.value)})} className="w-full bg-neutral-950 border border-neutral-800 p-3 rounded-xl mt-1 outline-none focus:border-orange-500" />
+                    <input required type="number" min="1" value={formWait.partySize} onChange={e => setFormWait({...formWait, partySize: Number(e.target.value)})} className="w-full bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 p-3 rounded-xl mt-1 outline-none focus:border-orange-500 text-neutral-900 dark:text-white transition-colors" />
                   </div>
                   <div>
                     <label className="text-[10px] text-neutral-500 uppercase font-bold">Teléfono</label>
-                    <input value={formWait.phone} onChange={e => setFormWait({...formWait, phone: e.target.value})} className="w-full bg-neutral-950 border border-neutral-800 p-3 rounded-xl mt-1 outline-none focus:border-orange-500" placeholder="Opcional" />
+                    <input value={formWait.phone} onChange={e => setFormWait({...formWait, phone: e.target.value})} className="w-full bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 p-3 rounded-xl mt-1 outline-none focus:border-orange-500 text-neutral-900 dark:text-white transition-colors" placeholder="Opcional" />
                   </div>
                 </div>
                 <button type="submit" className="w-full bg-orange-600 text-white font-bold py-4 rounded-xl mt-4 hover:bg-orange-500 transition-all">AÑADIR A LA FILA</button>
@@ -471,7 +442,7 @@ export default function AdminComandasPage() {
             {/* Lista Interactiva CON CONTADOR */}
             <div className="lg:col-span-2 space-y-4">
               {waitlist.length === 0 ? (
-                <div className="p-20 text-center text-neutral-600 border border-dashed border-neutral-800 rounded-[2.5rem]">No hay clientes en fila de espera.</div>
+                <div className="p-20 text-center text-neutral-500 dark:text-neutral-600 border border-dashed border-neutral-300 dark:border-neutral-800 rounded-[2.5rem]">No hay clientes en fila de espera.</div>
               ) : (
                 waitlist.map((w, idx) => (
                   <WaitlistItem 
@@ -484,7 +455,6 @@ export default function AdminComandasPage() {
                 ))
               )}
             </div>
-
           </motion.div>
         )}
 
@@ -498,23 +468,24 @@ export default function AdminComandasPage() {
                 { label: "Servicios", val: statsHoy.cantidad, icon: <CheckCircle2 className="text-green-500" /> },
                 { label: "Sincronización", val: "En Línea", icon: <Activity className="text-purple-500 animate-pulse" /> }
               ].map((kpi, i) => (
-                <div key={i} className="bg-neutral-900/40 p-6 rounded-[2.5rem] border border-neutral-900 shadow-xl relative overflow-hidden group">
+                <div key={i} className="bg-white dark:bg-neutral-900/40 p-6 rounded-[2.5rem] border border-neutral-200 dark:border-neutral-900 shadow-sm dark:shadow-xl relative overflow-hidden group transition-colors">
                   <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">{kpi.icon}</div>
                   <p className="text-[10px] text-neutral-500 uppercase tracking-widest mb-2 font-bold">{kpi.label}</p>
-                  <h2 className="text-3xl font-mono font-bold">{kpi.val}</h2>
+                  <h2 className="text-3xl font-mono font-bold text-neutral-900 dark:text-white">{kpi.val}</h2>
                 </div>
               ))}
             </div>
-            <div className="bg-neutral-900/30 rounded-[3rem] border border-neutral-900 p-8 shadow-2xl">
+
+            <div className="bg-white dark:bg-neutral-900/30 rounded-[3rem] border border-neutral-200 dark:border-neutral-900 p-8 shadow-sm dark:shadow-2xl transition-colors">
               <h3 className="text-sm font-bold uppercase tracking-[0.3em] text-neutral-500 mb-8 flex items-center gap-2"><LayoutDashboard size={16} className="text-orange-500" /> Rendimiento por Mesa</h3>
               <div className="space-y-6">
                 {Object.keys(statsHoy.ventasPorMesa).map((mesa) => {
                   const porcentaje = (statsHoy.ventasPorMesa[mesa] / statsHoy.total) * 100;
                   return (
                     <div key={mesa} className="space-y-2">
-                      <div className="flex justify-between text-xs font-bold"><span className="text-neutral-400">MESA {mesa}</span><span className="text-orange-500 font-mono">${statsHoy.ventasPorMesa[mesa].toLocaleString()}</span></div>
-                      <div className="w-full bg-neutral-950 h-1.5 rounded-full overflow-hidden border border-neutral-900">
-                        <motion.div initial={{ width: 0 }} animate={{ width: `${porcentaje}%` }} className="h-full bg-orange-600 shadow-[0_0_15px_rgba(234,88,12,0.4)]" />
+                      <div className="flex justify-between text-xs font-bold"><span className="text-neutral-500 dark:text-neutral-400">MESA {mesa}</span><span className="text-orange-600 dark:text-orange-500 font-mono">${statsHoy.ventasPorMesa[mesa].toLocaleString()}</span></div>
+                      <div className="w-full bg-neutral-100 dark:bg-neutral-950 h-1.5 rounded-full overflow-hidden border border-neutral-200 dark:border-neutral-900">
+                        <motion.div initial={{ width: 0 }} animate={{ width: `${porcentaje}%` }} className="h-full bg-orange-500 dark:bg-orange-600 shadow-[0_0_15px_rgba(249,115,22,0.4)]" />
                       </div>
                     </div>
                   );
@@ -533,30 +504,32 @@ export default function AdminComandasPage() {
                   <button 
                     key={i} 
                     onClick={() => verDiaPasado(f.date)}
-                    className="bg-neutral-900 p-6 rounded-[2.5rem] border border-neutral-800 hover:border-orange-500 transition-all text-center group"
+                    className="bg-white dark:bg-neutral-900 p-6 rounded-[2.5rem] border border-neutral-200 dark:border-neutral-800 hover:border-orange-500 dark:hover:border-orange-500 transition-all text-center group shadow-sm dark:shadow-none"
                   >
-                    <Calendar className="mx-auto mb-3 text-neutral-600 group-hover:text-orange-500 transition-colors" />
-                    <span className="text-xs font-bold uppercase tracking-tighter">{new Date(f.date).toLocaleDateString()}</span>
+                    <Calendar className="mx-auto mb-3 text-neutral-500 dark:text-neutral-600 group-hover:text-orange-500 transition-colors" />
+                    <span className="text-xs font-bold uppercase tracking-tighter text-neutral-800 dark:text-white">{new Date(f.date).toLocaleDateString()}</span>
                   </button>
                 ))}
               </div>
             ) : (
               <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
-                <button onClick={() => setFechaSeleccionada(null)} className="flex items-center gap-2 text-orange-500 text-[10px] font-bold uppercase tracking-widest hover:gap-4 transition-all">
+                <button onClick={() => setFechaSeleccionada(null)} className="flex items-center gap-2 text-orange-600 dark:text-orange-500 text-[10px] font-bold uppercase tracking-widest hover:gap-4 transition-all">
                   <ArrowLeft size={16} /> Volver al archivo
                 </button>
-                <div className="bg-orange-600/10 p-10 rounded-[3rem] border border-orange-600/20 shadow-2xl">
-                  <h2 className="text-neutral-400 text-[10px] uppercase tracking-widest mb-4">Dashboard del Día: <span className="text-white">{fechaSeleccionada}</span></h2>
+
+                <div className="bg-orange-50 dark:bg-orange-600/10 p-10 rounded-[3rem] border border-orange-200 dark:border-orange-600/20 shadow-lg dark:shadow-2xl transition-colors">
+                  <h2 className="text-neutral-500 dark:text-neutral-400 text-[10px] uppercase tracking-widest mb-4">Dashboard del Día: <span className="text-neutral-900 dark:text-white">{fechaSeleccionada}</span></h2>
                   <div className="flex gap-16">
-                    <div><p className="text-5xl font-mono font-bold text-white">${statsPasado.total.toLocaleString()}</p><p className="text-[10px] text-neutral-500 uppercase font-bold mt-2">Venta Bruta</p></div>
-                    <div><p className="text-5xl font-mono font-bold text-white">{statsPasado.cantidad}</p><p className="text-[10px] text-neutral-500 uppercase font-bold mt-2">Mesas Atendidas</p></div>
+                    <div><p className="text-5xl font-mono font-bold text-neutral-900 dark:text-white">${statsPasado.total.toLocaleString()}</p><p className="text-[10px] text-neutral-500 uppercase font-bold mt-2">Venta Bruta</p></div>
+                    <div><p className="text-5xl font-mono font-bold text-neutral-900 dark:text-white">{statsPasado.cantidad}</p><p className="text-[10px] text-neutral-500 uppercase font-bold mt-2">Mesas Atendidas</p></div>
                   </div>
                 </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                    {historialPasado.map(o => (
-                     <div key={o.id} className="bg-neutral-900/30 p-5 rounded-3xl border border-neutral-800 flex justify-between items-center group">
-                        <div><p className="font-bold text-neutral-200">MESA {o.table.number}</p><p className="text-[10px] text-neutral-600 uppercase italic">{o.user.name}</p></div>
-                        <p className="font-mono text-orange-500 font-bold">${o.items.reduce((a:number, i:any) => a+(i.product.price*i.quantity),0).toLocaleString()}</p>
+                     <div key={o.id} className="bg-white dark:bg-neutral-900/30 p-5 rounded-3xl border border-neutral-200 dark:border-neutral-800 flex justify-between items-center group shadow-sm dark:shadow-none transition-colors">
+                        <div><p className="font-bold text-neutral-800 dark:text-neutral-200">MESA {o.table.number}</p><p className="text-[10px] text-neutral-500 dark:text-neutral-600 uppercase italic">{o.user.name}</p></div>
+                        <p className="font-mono text-orange-600 dark:text-orange-500 font-bold">${o.items.reduce((a:number, i:any) => a+(i.product.price*i.quantity),0).toLocaleString()}</p>
                      </div>
                    ))}
                 </div>
