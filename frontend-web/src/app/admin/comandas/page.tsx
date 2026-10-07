@@ -55,7 +55,7 @@ function OrderCard({ c, handleImprimirYCobrar }: { c: any, handleImprimirYCobrar
             <TimeIcon size={14} />
             <span>{elapsedMinutes} min</span>
           </div>
-          <p className="text-neutral-500 text-[10px] uppercase font-bold">{c.user.name}</p>
+          <p className="text-neutral-400 text-[10px] uppercase font-bold">{c.user.name}</p>
         </div>
       </div>
       <div className="mb-6 p-4 bg-white dark:bg-neutral-950/80 rounded-2xl border border-orange-500/10 flex justify-between items-center shadow-inner">
