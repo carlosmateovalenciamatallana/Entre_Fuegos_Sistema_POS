@@ -1,170 +1,135 @@
 // src/app/mesas/page.tsx
 "use client";
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { useUserStore } from "@/store/userStore";
-import { io } from "socket.io-client";
-import { toast } from "sonner";
-import { LogOut, User as UserIcon, Lock } from "lucide-react";
 
-// Tipado basado en tu esquema Prisma
-interface Table {
-  id: number;
-  number: number;
-  capacity: number;
-  status: string;
+import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { AlertTriangle, ChevronRight, LogOut, Search, UserRound } from "lucide-react";
+import { useUserStore } from "@/store/userStore";
+
+interface Account {
+  table: string;
+  waiter: string;
+  elapsed: string;
+  total: string;
+  delayed?: boolean;
+  empty?: boolean;
 }
+
+const accounts: Account[] = [
+  { table: "T-01", waiter: "Sofía Ramírez", elapsed: "42 min", total: "$ 86.50" },
+  { table: "T-04", waiter: "Marco Díaz", elapsed: "18 min", total: "$ 124.00" },
+  { table: "T-07", waiter: "Lucía Torres", elapsed: "1 h 08 min", total: "$ 218.75", delayed: true },
+  { table: "T-09", waiter: "Andrés Vega", elapsed: "35 min", total: "$ 57.00" },
+  { table: "T-12", waiter: "Sofía Ramírez", elapsed: "12 min", total: "$ 142.25" },
+  { table: "T-15", waiter: "Marco Díaz", elapsed: "—", total: "—", empty: true },
+  { table: "T-18", waiter: "Lucía Torres", elapsed: "26 min", total: "$ 96.00" },
+  { table: "T-21", waiter: "Andrés Vega", elapsed: "—", total: "—", empty: true },
+];
 
 export default function MesasPage() {
   const router = useRouter();
   const user = useUserStore((state) => state.user);
   const logout = useUserStore((state) => state.logout);
+  const [query, setQuery] = useState("");
 
-  const [mesas, setMesas] = useState<Table[]>([]);
-  const [cargando, setCargando] = useState(true);
+  const filteredAccounts = useMemo(() => {
+    const normalized = query.trim().toLowerCase();
+    if (!normalized) return accounts;
+    return accounts.filter((account) =>
+      `${account.table} ${account.waiter}`.toLowerCase().includes(normalized),
+    );
+  }, [query]);
 
-  // 1. Carga inicial y WebSockets
-  useEffect(() => {
-    if (!user) {
-      router.push("/");
-      return;
-    }
-
-    const fetchMesas = async () => {
-      try {
-        const res = await fetch(process.env.NEXT_PUBLIC_API_URL + "/api/tables");
-        if (!res.ok) throw new Error("Error en red");
-        const data = await res.json();
-        setMesas(data);
-        setCargando(false);
-      } catch (error) {
-        toast.error("Error al cargar el mapa de mesas");
-        setCargando(false);
-      }
-    };
-    
-    fetchMesas();
-
-    const socket = io(process.env.NEXT_PUBLIC_API_URL + "");
-    
-    socket.on("estado_mesa_actualizado", (data: { id: number, status: string }) => {
-      setMesas((mesasActuales) => 
-        mesasActuales.map((m) => m.id === data.id ? { ...m, status: data.status } : m)
-      );
-    });
-
-    // --- ESCUCHADOR IHC: NOTIFICACIÓN DE COCINA (KDS) ---
-    socket.on("item_cook_status_updated", (data) => {
-      // Validamos que el plato esté LISTO y que el mesero actual sea el dueño de ese pedido
-      if (data.cookStatus === 'LISTO' && data.order.userId === user?.id) {
-        toast.success(
-          `¡ATENCIÓN! ${data.product.name} de la MESA ${data.order.table.number} está LISTO en cocina.`, 
-          { duration: 8000 } 
-        );
-      }
-    });
-
-    return () => {
-      socket.disconnect();
-    };
-  }, [user, router]);
-
-  // 2. FUNCIÓN ACTUALIZADA: Validación de seguridad y modo edición
-  const handleMesaClick = async (mesa: Table) => {
-    // Si la mesa está ocupada, verificamos quién la tiene
-    if (mesa.status.toLowerCase() === "ocupada") {
-      try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/orders/table/${mesa.id}`);
-        const ordenActiva = await res.json();
-
-        // VALIDACIÓN: Si hay una orden y el usuario logueado NO es el que la creó
-        if (ordenActiva && ordenActiva.userId !== user?.id) {
-          toast.error(`Mesa ${mesa.number} Bloqueada`, {
-            description: `Esta mesa está siendo atendida por ${ordenActiva.user?.name || 'otro mesero'}.`,
-            icon: <Lock size={16} />,
-            style: { background: '#171717', color: '#f97316', border: '1px solid #f97316' }
-          });
-          return;
-        }
-
-        // Si es el mismo mesero, lo enviamos en modo EDICIÓN
-        router.push(`/mesas/${mesa.id}?edit=true`);
-      } catch (error) {
-        toast.error("Error al verificar disponibilidad");
-      }
-      return;
-    }
-
-    // Si está libre, entra normal para una nueva orden
-    router.push(`/mesas/${mesa.id}`);
-  };
-
-  const handleCerrarSesion = () => {
+  const handleLogout = () => {
     logout();
     router.push("/");
   };
 
   return (
-    // AQUÍ ESTÁ LA MAGIA 1: Fondo claro adaptativo en el contenedor principal
-    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 text-neutral-900 dark:text-white font-light p-6 transition-colors duration-500">
-      
-      {/* Barra superior de identidad */}
-      <div className="flex justify-between items-center mb-10 border-b border-neutral-200 dark:border-neutral-800 pb-4 transition-colors">
-        <div>
-          <h1 className="text-3xl font-light text-neutral-800 dark:text-neutral-200 tracking-wide transition-colors">
-            Salón <span className="text-orange-600 dark:text-orange-500 font-bold">Principal</span>
-          </h1>
-          <p className="text-neutral-500 dark:text-neutral-400 text-sm flex items-center gap-2 mt-1 transition-colors">
-            <UserIcon size={14} className="text-orange-500" />
-            Mesero: <span className="font-medium text-neutral-700 dark:text-neutral-300">{user?.name || "Desconocido"}</span>
-          </p>
-        </div>
-        <button 
-          onClick={handleCerrarSesion}
-          // MAGIA 2: Botón de salir adaptable
-          className="p-3 bg-white dark:bg-neutral-900 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors border border-neutral-200 dark:border-neutral-800 text-neutral-500 dark:text-neutral-400 hover:text-red-500 dark:hover:text-red-500 shadow-sm dark:shadow-none"
-        >
-          <LogOut size={20} />
-        </button>
-      </div>
+    <main className="min-h-screen bg-[#10100f] text-[#f5f2ed]">
+      <header className="border-b border-white/[0.08] bg-[#151513] px-10 py-7">
+        <div className="mx-auto flex max-w-[1440px] items-center justify-between gap-8">
+          <div className="min-w-[220px]">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-orange-400">Entre Fuegos</p>
+            <h1 className="mt-1 text-2xl font-medium tracking-tight">Cuentas activas</h1>
+          </div>
 
-      {/* Renderizado del Mapa de Mesas */}
-      {cargando ? (
-        <div className="flex justify-center items-center h-64 text-orange-500/50 animate-pulse text-xl">
-          Cargando mapa de brasas...
+          <label className="group relative block w-full max-w-[680px]">
+            <span className="sr-only">Buscar mesa o mesero</span>
+            <Search aria-hidden="true" className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#918d85]" />
+            <input
+              type="search"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Buscar por mesa o mesero..."
+              className="h-14 w-full rounded-xl border border-white/[0.12] bg-[#20201d] pl-12 pr-4 text-[15px] text-white outline-none placeholder:text-[#77736c] transition focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[#151513]"
+            />
+          </label>
+
+          <div className="flex min-w-[220px] items-center justify-end gap-4">
+            <div className="text-right">
+              <p className="text-sm font-medium">{user?.name || "Turno de salón"}</p>
+              <p className="mt-0.5 text-xs text-[#918d85]">Mesero en turno</p>
+            </div>
+            <button
+              type="button"
+              onClick={handleLogout}
+              aria-label="Cerrar sesión"
+              className="rounded-lg border border-white/[0.1] p-3 text-[#aaa69d] transition hover:border-white/20 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"
+            >
+              <LogOut aria-hidden="true" />
+            </button>
+          </div>
         </div>
-      ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
-          {mesas.map((mesa) => {
-            const estaOcupada = mesa.status.toLowerCase() === "ocupada";
-            return (
+      </header>
+
+      <section className="mx-auto max-w-[1440px] px-10 py-9">
+        <div className="mb-7 flex items-end justify-between">
+          <div>
+            <div className="flex items-center gap-3">
+              <h2 className="text-lg font-medium">Salón principal</h2>
+              <span className="rounded-full bg-orange-500/10 px-2.5 py-1 text-xs font-medium text-orange-300">{filteredAccounts.filter((account) => !account.empty).length} abiertas</span>
+            </div>
+            <p className="mt-2 text-sm text-[#918d85]">Selecciona una cuenta para continuar con el servicio.</p>
+          </div>
+          <div className="flex items-center gap-2 text-xs text-[#918d85]">
+            <span className="size-2 rounded-full bg-emerald-400" aria-hidden="true" /> Actualizado hace un momento
+          </div>
+        </div>
+
+        {filteredAccounts.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-white/[0.14] px-6 py-20 text-center text-[#918d85]">No encontramos mesas o meseros con esa búsqueda.</div>
+        ) : (
+          <div className="grid grid-cols-4 gap-5">
+            {filteredAccounts.map((account) => (
               <button
-                key={mesa.id}
-                onClick={() => handleMesaClick(mesa)}
-                // MAGIA 3: Tarjetas de las mesas con colores claros y oscuros
-                className={`
-                  relative flex flex-col items-center justify-center p-8 rounded-[2.5rem] border transition-all duration-500 group
-                  ${estaOcupada 
-                     ? "bg-orange-50 dark:bg-neutral-900 border-orange-500/30 dark:border-orange-600/30 shadow-[0_0_20px_rgba(249,115,22,0.15)] dark:shadow-[0_0_30px_rgba(249,115,22,0.1)]" 
-                     : "bg-white dark:bg-neutral-900/40 border-neutral-200 dark:border-green-500/20 hover:border-green-500 dark:hover:border-green-500 shadow-sm dark:shadow-none hover:shadow-[0_0_20px_rgba(34,197,94,0.15)] dark:hover:shadow-[0_0_20px_rgba(34,197,94,0.1)]"
-                  }
-                `}
+                key={account.table}
+                type="button"
+                disabled={account.empty}
+                onClick={() => router.push(`/mesas/${account.table.replace("T-", "")}?edit=true`)}
+                className={`group relative min-h-[220px] rounded-xl border p-5 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 ${account.empty ? "cursor-default border-dashed border-white/[0.08] bg-white/[0.015] opacity-60" : "border-white/[0.1] bg-[#181816] hover:-translate-y-0.5 hover:border-orange-500/50 hover:bg-[#1d1d1a]"}`}
               >
-                {/* Punto de estado */}
-                <div className={`absolute top-4 right-4 w-3 h-3 rounded-full ${estaOcupada ? "bg-orange-500 shadow-[0_0_10px_#f97316]" : "bg-green-500 shadow-[0_0_10px_#22c55e]"}`}></div>
-                
-                <span className={`text-5xl font-light mb-2 transition-colors duration-300 ${estaOcupada ? "text-orange-600 dark:text-orange-500" : "text-neutral-700 dark:text-neutral-200 group-hover:text-green-600 dark:group-hover:text-green-400"}`}>
-                  {mesa.number}
-                </span>
-                
-                <span className="text-[10px] tracking-[0.3em] uppercase text-neutral-400 dark:text-neutral-500 font-bold transition-colors">
-                  {estaOcupada ? "En Servicio" : "Disponible"}
-                </span>
+                <div className="flex items-start justify-between">
+                  <span className={`text-2xl font-semibold tracking-tight ${account.empty ? "text-[#77736c]" : "text-orange-300"}`}>{account.table}</span>
+                  {!account.empty && <ChevronRight aria-hidden="true" className="text-[#77736c] transition group-hover:translate-x-1 group-hover:text-orange-300" />}
+                </div>
+                {account.empty ? (
+                  <div className="flex h-[140px] flex-col items-center justify-center gap-2 text-center">
+                    <UserRound aria-hidden="true" className="text-[#625f59]" />
+                    <span className="text-sm text-[#77736c]">Sin cuenta activa</span>
+                  </div>
+                ) : (
+                  <dl className="mt-8 grid grid-cols-2 gap-x-4 gap-y-5">
+                    <div><dt className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#77736c]">Mesero</dt><dd className="mt-1 truncate text-sm text-[#ddd9d1]">{account.waiter}</dd></div>
+                    <div><dt className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#77736c]">Espera</dt><dd className={`mt-1 text-sm ${account.delayed ? "font-medium text-red-400" : "text-[#ddd9d1]"}`}>{account.delayed ? <span className="inline-flex items-center gap-1.5"><AlertTriangle aria-hidden="true" className="size-4" />{account.elapsed}</span> : account.elapsed}</dd></div>
+                    <div className="col-span-2 border-t border-white/[0.08] pt-4"><dt className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#77736c]">Total</dt><dd className="mt-1 text-xl font-medium text-[#f5f2ed]">{account.total}</dd></div>
+                  </dl>
+                )}
               </button>
-            );
-          })}
-        </div>
-      )}
-    </div>
+            ))}
+          </div>
+        )}
+      </section>
+    </main>
   );
 }
